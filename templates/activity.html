@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Activity & Settings - Smart Track AI</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    
+    <style>
+        /* --- GLOBAL LAYOUT FIXES --- */
+        *, *::before, *::after {
+            box-sizing: border-box;
+        }
+
+        body.generator-body {
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            overflow-x: hidden;
+        }
+
+        /* --- TOP NAVIGATION BAR --- */
+        .top-nav-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 40px;
+            width: 100%;
+            max-width: 950px;
+            z-index: 10;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .top-nav-actions {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .nav-btn {
+            padding: 10px 18px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            border: none;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+            min-height: 42px;
+        }
+
+        .nav-btn-orange {
+            background: #f97316;
+            color: white;
+        }
+        .nav-btn-orange:hover {
+            background: #ea580c;
+        }
+
+        /* --- MAIN CONTAINER --- */
+        .activity-container {
+            width: 90%;
+            max-width: 950px;
+            margin: 10px auto 20px auto;
+            padding: 30px;
+            background: rgba(15, 23, 42, 0.85);
+            border-radius: 20px;
+            border: 1px solid rgba(45, 212, 191, 0.2);
+            box-shadow: 0 12px 35px rgba(0, 0, 0, 0.45);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+        }
+
+        .section-header {
+            border-bottom: 2px solid rgba(255,255,255,0.1);
+            padding-bottom: 15px;
+            margin-bottom: 25px;
+        }
+
+        .section-header h2 {
+            margin: 0;
+            color: #2dd4bf;
+            font-size: 24px;
+            font-weight: 700;
+        }
+
+        /* --- ALERT EMAIL SETTINGS PANEL --- */
+        .settings-card {
+            background: rgba(15, 23, 42, 0.6);
+            padding: 22px;
+            border-radius: 14px;
+            border: 1px solid rgba(45, 212, 191, 0.3);
+            margin-bottom: 35px;
+        }
+
+        .settings-card h3 {
+            margin-top: 0;
+            color: #f8fafc;
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .settings-card p {
+            color: #94a3b8;
+            font-size: 14px;
+            line-height: 1.5;
+            margin-bottom: 18px;
+        }
+
+        .current-email-badge {
+            background: rgba(0, 0, 0, 0.35);
+            padding: 14px 18px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .email-form {
+            display: flex;
+            gap: 12px;
+            width: 100%;
+        }
+
+        .email-input {
+            flex: 1;
+            padding: 12px 16px;
+            background: rgba(30, 41, 59, 0.8);
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 8px;
+            color: white;
+            font-size: 14px;
+            outline: none;
+            min-height: 46px;
+        }
+
+        .email-input:focus {
+            border-color: #2dd4bf;
+            box-shadow: 0 0 0 2px rgba(45, 212, 191, 0.2);
+        }
+
+        .btn-update-email {
+            padding: 12px 24px;
+            background: #1aa19c;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 700;
+            font-size: 14px;
+            transition: background 0.2s;
+            white-space: nowrap;
+            min-height: 46px;
+        }
+
+        .btn-update-email:hover {
+            background: #0f6663;
+        }
+
+        /* --- RESPONSIVE LOGS TABLE --- */
+        .table-responsive-wrapper {
+            width: 100%;
+            overflow-x: auto;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .logs-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: rgba(0, 0, 0, 0.25);
+            min-width: 580px;
+        }
+
+        .logs-table th {
+            padding: 14px 16px;
+            text-align: left;
+            background: rgba(0, 0, 0, 0.5);
+            color: #2dd4bf;
+            font-size: 14px;
+            font-weight: 700;
+        }
+
+        .logs-table td {
+            padding: 14px 16px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            font-size: 14px;
+            vertical-align: middle;
+        }
+
+        /* --- FULL BOTTOM LOGOUT BUTTON (MATCHES SCANNER PAGE) --- */
+        .bottom-logout-wrapper {
+            width: 90%;
+            max-width: 950px;
+            margin: 10px auto 30px auto;
+        }
+
+        .btn-full-logout {
+            width: 100%;
+            padding: 16px;
+            border-radius: 12px;
+            font-size: 15px;
+            font-weight: 800;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            cursor: pointer;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            background: linear-gradient(135deg, #ef4444, #b91c1c);
+            color: #ffffff;
+            box-shadow: 0 6px 18px rgba(220, 38, 38, 0.4);
+            transition: all 0.25s ease;
+            display: block;
+            text-align: center;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        .btn-full-logout:hover {
+            background: linear-gradient(135deg, #f87171, #dc2626);
+            box-shadow: 0 8px 25px rgba(220, 38, 38, 0.6);
+            transform: translateY(-2px);
+        }
+
+        /* --- MODAL STYLES --- */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.65);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+        }
+
+        .modal-content {
+            background: #ffffff;
+            padding: 35px 30px;
+            border-radius: 16px;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            max-width: 420px;
+            width: 90%;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        .modal-content h2 {
+            color: #1e293b;
+            margin-top: 0;
+            margin-bottom: 12px;
+            font-size: 20px;
+            font-weight: 700;
+        }
+
+        .modal-content p {
+            color: #64748b;
+            margin-bottom: 25px;
+            font-size: 14px;
+        }
+
+        .modal-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+        }
+
+        .btn-confirm-logout {
+            background: linear-gradient(135deg, #ef4444, #b91c1c);
+            color: white;
+            text-decoration: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: 600;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.2s;
+            flex: 1;
+            display: inline-flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .btn-confirm-logout:hover { background: linear-gradient(135deg, #f87171, #dc2626); }
+
+        .btn-cancel-logout {
+            background: #64748b;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: 600;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.2s;
+            flex: 1;
+        }
+        .btn-cancel-logout:hover { background: #475569; }
+
+        /* --- MOBILE RESPONSIVENESS (< 650px) --- */
+        @media (max-width: 650px) {
+            .top-nav-bar {
+                padding: 15px;
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .top-nav-actions {
+                justify-content: flex-end;
+                width: 100%;
+            }
+
+            .back-btn {
+                text-align: center;
+                margin-bottom: 5px;
+            }
+
+            .activity-container {
+                width: 95%;
+                padding: 20px 15px;
+                margin-top: 5px;
+                border-radius: 16px;
+            }
+
+            .bottom-logout-wrapper {
+                width: 95%;
+            }
+
+            .section-header h2 {
+                font-size: 20px;
+            }
+
+            .settings-card {
+                padding: 16px;
+            }
+
+            .email-form {
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .btn-update-email {
+                width: 100%;
+            }
+
+            .logs-table th, .logs-table td {
+                padding: 10px 12px;
+                font-size: 13px;
+            }
+        }
+    </style>
+</head>
+<body class="generator-body">
+
+    <!-- Minimal Navigation Bar -->
+    <div class="top-nav-bar">
+        <a href="/option" class="back-btn">← Back to Main Menu</a>
+        
+        <div class="top-nav-actions">
+            <!-- Clear Activity Data Button -->
+            <button onclick="showClearDataModal()" class="nav-btn nav-btn-orange">🗑️ Clear Data</button>
+        </div>
+    </div>
+
+    <!-- Main Content Container -->
+    <div class="activity-container">
+        
+        <div class="section-header">
+            <h2>⚙️ System Activity & Settings</h2>
+        </div>
+
+        <!-- Alert Email Settings -->
+        <div class="settings-card">
+            <h3>Critical Alert Email Configuration</h3>
+            <p>
+                This email address will receive automated notifications when the AI predictive model flags a track asset as <b>Critical</b>.
+            </p>
+            
+            <div class="current-email-badge">
+                <span style="color: #94a3b8;">Current Recipient:</span> 
+                <strong style="color: #2dd4bf; font-size: 1.05rem;">{{ current_email }}</strong>
+            </div>
+
+            <form action="{{ url_for('set_alert_email') }}" method="POST" class="email-form">
+                <input type="email" name="new_email" class="email-input" placeholder="Enter new alert email address" required>
+                <button type="submit" class="btn-update-email">
+                    Update Email
+                </button>
+            </form>
+        </div>
+
+        <!-- System Access Logs -->
+        <h3 style="color: #f8fafc; margin-bottom: 15px; font-size: 18px;">System Access Logs</h3>
+        
+        <!-- Table Scroll Container for Mobile -->
+        <div class="table-responsive-wrapper">
+            <table class="logs-table">
+                <thead>
+                    <tr>
+                        <th>Timestamp</th>
+                        <th>User</th>
+                        <th>Action Event</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for log in logs %}
+                    <tr>
+                        <td style="color: #94a3b8;">
+                            {{ log.time }}
+                        </td>
+                        <td style="color: white; font-weight: bold;">
+                            {{ log.user }}
+                        </td>
+                        <td>
+                            {% if 'Logged In' in log.action %}
+                                <span style="color: #4ade80; font-weight: 600;">🔓 {{ log.action }}</span>
+                            {% elif 'Logged Out' in log.action %}
+                                <span style="color: #f87171; font-weight: 600;">🔒 {{ log.action }}</span>
+                            {% elif 'Updated Alert Email' in log.action %}
+                                <span style="color: #60a5fa; font-weight: 600;">📧 {{ log.action }}</span>
+                            {% else %}
+                                <span style="color: #94a3b8;">{{ log.action }}</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="3" style="text-align: center; color: #64748b; font-style: italic; padding: 25px;">
+                            No recent access logs found.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- FULL BOTTOM LOGOUT BUTTON -->
+    <div class="bottom-logout-wrapper">
+        <button onclick="showLogoutModal()" class="btn-full-logout">Logout 🚪</button>
+    </div>
+
+    <!-- Custom Logout Modal -->
+    <div id="logoutModal" class="modal-overlay">
+        <div class="modal-content">
+            <h2>Confirm System Logout</h2>
+            <p>Are you sure you want to end your secure session?</p>
+            <div class="modal-buttons">
+                <a href="/logout" class="btn-confirm-logout">Logout</a>
+                <button onclick="hideLogoutModal()" class="btn-cancel-logout">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Custom Clear Data Modal -->
+    <div id="clearDataModal" class="modal-overlay">
+        <div class="modal-content">
+            <h2>Confirm Data Wipe</h2>
+            <p>Do you really want to clear all activity logs?</p>
+            <div class="modal-buttons">
+                <a href="/clear_activity" class="btn-confirm-logout">OK</a>
+                <button onclick="hideClearDataModal()" class="btn-cancel-logout">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript Modal Handlers -->
+    <script>
+        function showLogoutModal() {
+            document.getElementById('logoutModal').style.display = 'flex';
+        }
+
+        function hideLogoutModal() {
+            document.getElementById('logoutModal').style.display = 'none';
+        }
+
+        function showClearDataModal() {
+            document.getElementById('clearDataModal').style.display = 'flex';
+        }
+
+        function hideClearDataModal() {
+            document.getElementById('clearDataModal').style.display = 'none';
+        }
+    </script>
+
+</body>
+</html>
