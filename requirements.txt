@@ -1,9 +1,0 @@
-Flask
-pymongo
-dnspython
-joblib
-pandas
-scikit-learn
-qrcode
-pillow
-pytz
