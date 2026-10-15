@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Activity & Settings - Smart Track AI</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    
+    <style>
+        /* Custom Modal Styles (Matches Logout & Dashboard modals) */
+        .modal-overlay {
+            display: none; /* Hidden by default */
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6); /* Dark background blur */
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 30px 40px;
+            border-radius: 12px;
+            text-align: center;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            max-width: 450px;
+            width: 90%;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        .modal-content h2 {
+            color: #333333;
+            margin-top: 0;
+            margin-bottom: 15px;
+            font-size: 22px;
+            font-weight: 700;
+        }
+
+        .modal-content p {
+            color: #6b7280;
+            margin-bottom: 30px;
+            font-size: 16px;
+        }
+
+        .modal-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+        }
+
+        .btn-confirm-logout {
+            background: #ef4444; /* Red button */
+            color: white;
+            text-decoration: none;
+            padding: 12px 30px;
+            border-radius: 6px;
+            font-weight: 600;
+            border: none;
+            cursor: pointer;
+            font-size: 15px;
+            transition: background 0.3s;
+            display: inline-block;
+        }
+        
+        .btn-confirm-logout:hover {
+            background: #dc2626;
+        }
+
+        .btn-cancel-logout {
+            background: #64748b; /* Gray button */
+            color: white;
+            padding: 12px 30px;
+            border-radius: 6px;
+            font-weight: 600;
+            border: none;
+            cursor: pointer;
+            font-size: 15px;
+            transition: background 0.3s;
+        }
+
+        .btn-cancel-logout:hover {
+            background: #475569;
+        }
+    </style>
+</head>
+<body class="generator-body">
+
+    <!-- Minimal Navigation -->
+    <div class="top-nav" style="display: flex; justify-content: space-between; padding: 20px 40px; width: 100%; box-sizing: border-box; align-items: center;">
+        <a href="/option" class="back-btn" style="text-decoration: none; color: #2dd4bf; font-weight: 600; font-size: 1.1rem;">← Back to Main Menu</a>
+        
+        <div style="display: flex; gap: 15px; align-items: center;">
+            <!-- Clear Activity Data Button -->
+            <button onclick="showClearDataModal()" style="background: #f97316; color: white; border: none; padding: 8px 16px; border-radius: 6px; font-weight: 600; cursor: pointer;">🗑️ Clear Data</button>
+            <!-- Logout Trigger -->
+            <a href="#" onclick="showLogoutModal(); return false;" class="back-btn" style="text-decoration: none; color: #f87171; font-weight: 600; font-size: 1.1rem;">Logout 🚪</a>
+        </div>
+    </div>
+
+    <!-- Main Content Container -->
+    <div class="generator-container" style="max-width: 900px; margin: 20px auto; padding: 30px; background: rgba(15, 23, 42, 0.85); border-radius: 15px; border: 1px solid rgba(45, 212, 191, 0.2); box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);">
+        
+        <div style="border-bottom: 2px solid rgba(255,255,255,0.1); padding-bottom: 15px; margin-bottom: 25px;">
+            <h2 style="margin: 0; color: #2dd4bf;">⚙️ System Activity & Settings</h2>
+        </div>
+
+        <!-- Alert Email Settings -->
+        <div style="background: rgba(15, 23, 42, 0.5); padding: 20px; border-radius: 12px; border: 1px solid rgba(45, 212, 191, 0.3); margin-bottom: 30px;">
+            <h3 style="margin-top: 0; color: #f8fafc; font-size: 1.1rem;">Critical Alert Email Configuration</h3>
+            <p style="color: #94a3b8; font-size: 0.9rem;">
+                This email address will receive automated alerts when the AI model flags a track asset as <b>Critical</b>.
+            </p>
+            
+            <div style="background: rgba(0,0,0,0.3); padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+                <span style="color: #94a3b8;">Current Recipient:</span> 
+                <strong style="color: #2dd4bf; font-size: 1.1rem; margin-left: 10px;">{{ current_email }}</strong>
+            </div>
+
+            <form action="{{ url_for('set_alert_email') }}" method="POST" style="display: flex; gap: 15px;">
+                <input type="email" name="new_email" placeholder="Enter new alert email address" required 
+                       style="flex: 1; padding: 12px; background: rgba(30, 41, 59, 0.8); border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; color: white;">
+                <button type="submit" style="width: auto; padding: 12px 25px; margin: 0; background: #1aa19c; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold;">
+                    Update Email
+                </button>
+            </form>
+        </div>
+
+        <!-- System Access Logs -->
+        <h3 style="color: #f8fafc; margin-bottom: 15px;">System Access Logs</h3>
+        <table style="width: 100%; border-collapse: collapse; background: rgba(0,0,0,0.2); border-radius: 10px; overflow: hidden;">
+            <thead>
+                <tr>
+                    <th style="padding: 15px; text-align: left; background: rgba(0,0,0,0.4); color: #2dd4bf;">Timestamp</th>
+                    <th style="padding: 15px; text-align: left; background: rgba(0,0,0,0.4); color: #2dd4bf;">User</th>
+                    <th style="padding: 15px; text-align: left; background: rgba(0,0,0,0.4); color: #2dd4bf;">Action Event</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for log in logs %}
+                <tr>
+                    <td style="padding: 15px; border-bottom: 1px solid rgba(255,255,255,0.1); color: #94a3b8;">
+                        {{ log.time }}
+                    </td>
+                    <td style="padding: 15px; border-bottom: 1px solid rgba(255,255,255,0.1); color: white; font-weight: bold;">
+                        {{ log.user }}
+                    </td>
+                    <td style="padding: 15px; border-bottom: 1px solid rgba(255,255,255,0.1);">
+                        {% if 'Logged In' in log.action %}
+                            <span style="color: #4ade80;">🔓 {{ log.action }}</span>
+                        {% elif 'Logged Out' in log.action %}
+                            <span style="color: #f87171;">🔒 {{ log.action }}</span>
+                        {% elif 'Updated Alert Email' in log.action %}
+                            <span style="color: #60a5fa;">📧 {{ log.action }}</span>
+                        {% else %}
+                            <span style="color: #94a3b8;">{{ log.action }}</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="3" style="padding: 30px; text-align: center; color: #64748b; font-style: italic;">
+                        No recent access logs found.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Custom Logout Modal -->
+    <div id="logoutModal" class="modal-overlay">
+        <div class="modal-content">
+            <h2>Confirm System Logout</h2>
+            <p>Are you sure you want to end your secure session?</p>
+            <div class="modal-buttons">
+                <a href="/logout" class="btn-confirm-logout">Logout</a>
+                <button onclick="hideLogoutModal()" class="btn-cancel-logout">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Custom Clear Data Modal -->
+    <div id="clearDataModal" class="modal-overlay">
+        <div class="modal-content">
+            <h2>Confirm Data Wipe</h2>
+            <p>Do you really want to clear all activity logs?</p>
+            <div class="modal-buttons">
+                <a href="/clear_activity" class="btn-confirm-logout">OK</a>
+                <button onclick="hideClearDataModal()" class="btn-cancel-logout">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript to control the Modals -->
+    <script>
+        function showLogoutModal() {
+            document.getElementById('logoutModal').style.display = 'flex';
+        }
+
+        function hideLogoutModal() {
+            document.getElementById('logoutModal').style.display = 'none';
+        }
+
+        function showClearDataModal() {
+            document.getElementById('clearDataModal').style.display = 'flex';
+        }
+
+        function hideClearDataModal() {
+            document.getElementById('clearDataModal').style.display = 'none';
+        }
+    </script>
+
+</body>
+</html>
