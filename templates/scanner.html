@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Field Scanner - Smart Track AI</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js" type="text/javascript"></script>
+    
+    <style>
+        *, *::before, *::after { box-sizing: border-box; }
+        
+        body { 
+            margin: 0; 
+            padding: 20px 15px; 
+            font-family: 'Inter', sans-serif; 
+            background-color: #f1f5f9; 
+            color: #1e293b; 
+            overflow-x: hidden; 
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* --- RESPONSIVE NAVBAR --- */
+        .navbar { 
+            background: transparent; 
+            padding: 5px 0 20px 0; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            width: 100%; 
+            max-width: 900px; 
+            margin: 0 auto; 
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .page-header-box { 
+            color: #ffffff; 
+            background: linear-gradient(135deg, rgba(30, 58, 138, 0.95), rgba(15, 23, 42, 0.95)); 
+            backdrop-filter: blur(16px); 
+            font-size: 18px; 
+            font-weight: 800; 
+            text-align: center; 
+            padding: 12px 20px; 
+            border-radius: 14px; 
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3); 
+            border: 1px solid rgba(255, 255, 255, 0.2); 
+            border-bottom: 4px solid #10b981; 
+            letter-spacing: 1.5px; 
+            text-transform: uppercase; 
+            margin: 0; 
+        }
+
+        .nav-buttons { 
+            display: flex; 
+            gap: 8px; 
+            align-items: center; 
+            flex-wrap: wrap; 
+        }
+
+        .btn { 
+            padding: 10px 14px; 
+            border-radius: 8px; 
+            font-size: 13px; 
+            font-weight: 700; 
+            cursor: pointer; 
+            border: none; 
+            text-decoration: none; 
+            color: white; 
+            display: inline-flex; 
+            align-items: center;
+            justify-content: center;
+            text-align: center; 
+            min-height: 42px;
+            transition: all 0.2s ease;
+        }
+
+        .btn-purple { background-color: #8b5cf6; } 
+        .btn-blue { background-color: #3b82f6; } 
+        .btn-teal { background-color: #0d9488; } 
+        .btn-indigo { background-color: #4f46e5; }
+        .btn-red { background-color: #ef4444; } 
+        .btn-slate { background-color: #475569; } 
+        .btn-green { background-color: #10b981; }
+
+        /* --- MAIN CARD & SCANNER VIEWPORT --- */
+        .main-card { 
+            background: #ffffff; 
+            border-radius: 16px; 
+            padding: 25px; 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05); 
+            max-width: 900px; 
+            margin: 0 auto; 
+            width: 100%;
+        }
+
+        #reader { 
+            width: 100%; 
+            min-height: 280px; 
+            border-radius: 12px; 
+            overflow: hidden; 
+            background: #0f172a; 
+            margin-bottom: 15px; 
+            border: 2px solid #e2e8f0; 
+        }
+
+        .camera-controls { 
+            display: flex; 
+            justify-content: center; 
+            gap: 12px; 
+            margin-bottom: 25px; 
+            flex-wrap: wrap; 
+        }
+
+        label { 
+            display: block; 
+            font-size: 11px; 
+            font-weight: 700; 
+            color: #64748b; 
+            margin-bottom: 8px; 
+            text-transform: uppercase; 
+            letter-spacing: 0.5px; 
+        }
+
+        input[type="text"] { 
+            width: 100%; 
+            padding: 12px; 
+            border: 1px solid #cbd5e1; 
+            border-radius: 8px; 
+            font-size: 14px; 
+            font-family: 'Inter'; 
+            margin-bottom: 20px; 
+            background: #ffffff; 
+            min-height: 46px;
+        }
+
+        .location-box { 
+            background: #f0fdf4; 
+            border: 1px solid #bbf7d0; 
+            padding: 12px; 
+            border-radius: 8px; 
+            font-size: 13px; 
+            color: #166534; 
+            font-weight: 600; 
+            margin-bottom: 20px; 
+        }
+
+        .location-box small { 
+            color: #64748b; 
+            font-weight: 500; 
+            display: block; 
+            margin-top: 4px; 
+        }
+
+        .grade-btn { 
+            width: 100%; 
+            padding: 14px; 
+            border-radius: 8px; 
+            font-size: 12px; 
+            font-weight: 700; 
+            margin-bottom: 10px; 
+            cursor: pointer; 
+            transition: all 0.25s ease; 
+            text-transform: uppercase; 
+            letter-spacing: 0.5px; 
+            box-shadow: 0 4px 6px rgba(0,0,0,0.08); 
+            min-height: 48px;
+        }
+
+        .grade-btn:active { transform: scale(0.98); }
+        .grade-1 { background: #10b981; color: #ffffff; border: 2px solid #059669; }
+        .grade-2 { background: #eab308; color: #1e293b; border: 2px solid #ca8a04; font-weight: 800; }
+        .grade-3 { background: #f97316; color: #ffffff; border: 2px solid #ea580c; }
+        .grade-4 { background: #ef4444; color: #ffffff; border: 2px solid #dc2626; }
+
+        .status-bar { 
+            margin-top: 20px; 
+            padding: 15px; 
+            border-radius: 8px; 
+            font-size: 13px; 
+            font-weight: 600; 
+            text-align: center; 
+            background: #e0f2fe; 
+            color: #0369a1; 
+            border: 1px solid #bae6fd; 
+        }
+
+        /* --- FULL BOTTOM LOGOUT BUTTON --- */
+        .bottom-logout-wrapper {
+            width: 100%;
+            max-width: 900px;
+            margin: 25px auto 10px auto;
+        }
+
+        .btn-full-logout {
+            width: 100%;
+            padding: 16px;
+            border-radius: 12px;
+            font-size: 15px;
+            font-weight: 800;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            cursor: pointer;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            background: linear-gradient(135deg, #ef4444, #b91c1c);
+            color: #ffffff;
+            box-shadow: 0 6px 18px rgba(220, 38, 38, 0.4);
+            transition: all 0.25s ease;
+            display: block;
+            text-align: center;
+        }
+
+        .btn-full-logout:hover {
+            background: linear-gradient(135deg, #f87171, #dc2626);
+            box-shadow: 0 8px 25px rgba(220, 38, 38, 0.6);
+            transform: translateY(-2px);
+        }
+
+        /* --- MODAL DIALOGS --- */
+        .modal-overlay { 
+            position: fixed; 
+            top: 0; left: 0; 
+            width: 100%; height: 100%; 
+            background: rgba(0, 0, 0, 0.6); 
+            backdrop-filter: blur(3px); 
+            display: none; 
+            justify-content: center; 
+            align-items: center; 
+            z-index: 9999; 
+        }
+
+        .modal-content { 
+            background: #ffffff; 
+            padding: 30px; 
+            border-radius: 16px; 
+            text-align: center; 
+            width: 90%; 
+            max-width: 380px; 
+            box-shadow: 0 15px 30px rgba(0,0,0,0.3); 
+        }
+
+        .modal-content h3 { color: #1e293b; margin-top: 0; margin-bottom: 10px; font-size: 20px; font-weight: 800; }
+        .modal-content p { color: #64748b; margin-bottom: 25px; font-size: 14px; }
+        .modal-actions { display: flex; gap: 12px; }
+        .modal-btn { flex: 1; padding: 12px; border-radius: 8px; font-size: 14px; font-weight: 700; cursor: pointer; border: none; }
+        .modal-btn-red { background-color: #dc2626; color: white; }
+        .modal-btn-gray { background-color: #64748b; color: white; }
+
+        /* --- MOBILE RESPONSIVENESS --- */
+        @media (max-width: 700px) {
+            body { padding: 12px 10px; }
+
+            .navbar {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 12px;
+            }
+
+            .page-header-box {
+                width: 100%;
+                font-size: 16px;
+                padding: 10px 15px;
+            }
+
+            .nav-buttons {
+                justify-content: center;
+                width: 100%;
+                gap: 8px;
+            }
+
+            .btn {
+                flex: 1 1 calc(50% - 8px);
+                font-size: 12px;
+                padding: 10px 8px;
+            }
+
+            .main-card {
+                padding: 16px;
+            }
+
+            .camera-controls {
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .camera-controls .btn {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- NAVBAR WITHOUT LOGOUT BUTTON -->
+    <div class="navbar">
+        <div class="page-header-box">Field Scanner</div>
+        <div class="nav-buttons">
+            <a href="/map" class="btn btn-purple" onclick="stopKeepScanning()">🗺️ Map</a>
+            <button onclick="changeLocation(); stopKeepScanning();" class="btn btn-blue">📍 Change Location</button>
+            <a href="/option" class="btn btn-indigo" onclick="stopKeepScanning()">🏠 Menu</a>
+            <a href="/dashboard" class="btn btn-teal" onclick="stopKeepScanning()">📊 Dashboard</a>
+        </div>
+    </div>
+
+    <!-- MAIN CAMERA SCANNER & FORM CARD -->
+    <div class="main-card">
+        <div id="reader"></div>
+        
+        <div class="camera-controls">
+            <button id="btn-toggle-scan" onclick="stopKeepScanning(); toggleScan();" class="btn btn-green">📷 Scan</button>
+            <button id="btn-keep-scan" onclick="toggleKeepScanning()" class="btn btn-indigo">🔁 Keep Scanning</button>
+            <button onclick="stopKeepScanning(); document.getElementById('qr-input-file').click();" class="btn btn-slate">📁 Upload Image</button>
+            <input type="file" id="qr-input-file" accept="image/*" style="display:none;">
+        </div>
+
+        <div class="form-section">
+            <label>SCANNED ASSET ID:</label>
+            <input type="text" id="asset_id" placeholder="Scan QR code or upload image..." readonly>
+
+            <label>CURRENT RAILWAY ZONE (LOCATION SYNCED):</label>
+            <div class="location-box">
+                📍 [SELECTED ZONE] <span id="zone-display">{{ zone }}</span><br>
+                <small id="gps-coords">Coords: {{ gps }}</small>
+            </div>
+
+            <label>VISUAL INSPECTOR INPUT (CLICK TO AUTO-SUBMIT):</label>
+            <button class="grade-btn grade-1" onclick="runAIPrediction('Grade 1')">GRADE 1 - CLEAN / LIKE NEW</button>
+            <button class="grade-btn grade-2" onclick="runAIPrediction('Grade 2')">GRADE 2 - MINOR SURFACE RUST</button>
+            <button class="grade-btn grade-3" onclick="runAIPrediction('Grade 3')">GRADE 3 - PITTING & MODERATE WEAR</button>
+            <button class="grade-btn grade-4" onclick="runAIPrediction('Grade 4')">GRADE 4 - SEVERE DEGRADATION (CRITICAL)</button>
+
+            <div id="status-bar" class="status-bar">Tap <b>'Scan'</b> above to start camera stream or use <b>'Upload Image'</b>.</div>
+        </div>
+    </div>
+
+    <!-- FULL BOTTOM LOGOUT BUTTON -->
+    <div class="bottom-logout-wrapper">
+        <button onclick="showLogoutModal(); stopKeepScanning();" class="btn-full-logout">Logout 🚪</button>
+    </div>
+
+    <!-- Logout Confirmation Modal -->
+    <div id="logoutModal" class="modal-overlay">
+        <div class="modal-content">
+            <h3>Confirm Logout</h3>
+            <p>Are you sure you want to log out of the Smart Track AI session?</p>
+            <div class="modal-actions">
+                <button class="modal-btn modal-btn-red" onclick="confirmLogout()">Logout</button>
+                <button class="modal-btn modal-btn-gray" onclick="hideLogoutModal()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let html5QrCode = null;
+        let isScanningActive = false;
+
+        document.addEventListener("DOMContentLoaded", function() {
+            try {
+                html5QrCode = new Html5Qrcode("reader");
+            } catch (e) {
+                console.error("Scanner init error:", e);
+            }
+
+            let isLooping = localStorage.getItem("keepScanningLoop") === "true";
+            if (isLooping) {
+                let btn = document.getElementById("btn-keep-scan");
+                if(btn) {
+                    btn.innerHTML = "⏹️ Stop Auto-Scan";
+                    btn.className = "btn btn-red";
+                }
+            }
+
+            startCamera();
+
+            const qrInputFile = document.getElementById('qr-input-file');
+            if (qrInputFile) {
+                qrInputFile.addEventListener('change', e => {
+                    if (e.target.files.length === 0) return;
+                    const imageFile = e.target.files[0];
+                    
+                    const statusBar = document.getElementById('status-bar');
+                    statusBar.innerHTML = "⏳ Decoding uploaded image...";
+                    statusBar.style.backgroundColor = "#e0e7ff";
+                    statusBar.style.color = "#3730a3";
+
+                    if (html5QrCode && html5QrCode.isScanning) {
+                        html5QrCode.stop().catch(() => {});
+                        isScanningActive = false;
+                        updateScanButtonState();
+                    }
+
+                    const tempScanner = new Html5Qrcode("reader");
+                    tempScanner.scanFile(imageFile, true)
+                    .then(decodedText => {
+                        handleSuccessfulScan(decodedText);
+                    })
+                    .catch(err => {
+                        statusBar.innerHTML = "⚠️ No QR code found in the image. Try another image.";
+                        statusBar.style.backgroundColor = "#fee2e2";
+                        statusBar.style.color = "#991b1b";
+                    });
+                    
+                    e.target.value = '';
+                });
+            }
+        });
+
+        function toggleKeepScanning() {
+            let isLooping = localStorage.getItem("keepScanningLoop") === "true";
+            let btn = document.getElementById("btn-keep-scan");
+
+            if (isLooping) {
+                stopKeepScanning();
+            } else {
+                localStorage.setItem("keepScanningLoop", "true");
+                btn.innerHTML = "⏹️ Stop Auto-Scan";
+                btn.className = "btn btn-red";
+                
+                if (!isScanningActive) {
+                    startCamera();
+                }
+            }
+        }
+
+        function stopKeepScanning() {
+            localStorage.setItem("keepScanningLoop", "false");
+            let btn = document.getElementById("btn-keep-scan");
+            if(btn) {
+                btn.innerHTML = "🔁 Keep Scanning";
+                btn.className = "btn btn-indigo";
+            }
+        }
+
+        function toggleScan() {
+            if (!isScanningActive) {
+                startCamera();
+            } else {
+                stopCamera();
+            }
+        }
+
+        function startCamera() {
+            const statusBar = document.getElementById('status-bar');
+            statusBar.innerHTML = "⏳ Requesting camera permission...";
+            statusBar.style.backgroundColor = "#fef3c7";
+            statusBar.style.color = "#92400e";
+
+            if (!html5QrCode) {
+                html5QrCode = new Html5Qrcode("reader");
+            }
+
+            const config = { fps: 10, qrbox: { width: 250, height: 250 } };
+
+            html5QrCode.start({ facingMode: "environment" }, config, handleSuccessfulScan)
+            .then(() => {
+                isScanningActive = true;
+                updateScanButtonState();
+                statusBar.innerHTML = "📷 Camera active. Point at a track fitting QR code.";
+                statusBar.style.backgroundColor = "#ccfbf1";
+                statusBar.style.color = "#0f766e";
+            })
+            .catch(err => {
+                html5QrCode.start({ facingMode: "user" }, config, handleSuccessfulScan)
+                .then(() => {
+                    isScanningActive = true;
+                    updateScanButtonState();
+                    statusBar.innerHTML = "📷 Front camera active.";
+                    statusBar.style.backgroundColor = "#ccfbf1";
+                    statusBar.style.color = "#0f766e";
+                })
+                .catch(err2 => {
+                    statusBar.innerHTML = "⚠️ Camera Blocked/Unavailable. Please use 'Upload Image'.";
+                    statusBar.style.backgroundColor = "#fee2e2";
+                    statusBar.style.color = "#991b1b";
+                });
+            });
+        }
+
+        function stopCamera() {
+            const statusBar = document.getElementById('status-bar');
+            if (html5QrCode && html5QrCode.isScanning) {
+                html5QrCode.stop().then(() => {
+                    isScanningActive = false;
+                    updateScanButtonState();
+                    statusBar.innerHTML = "⏸️ Camera stopped.";
+                    statusBar.style.backgroundColor = "#e0e7ff";
+                    statusBar.style.color = "#3730a3";
+                }).catch(() => {});
+            } else {
+                isScanningActive = false;
+                updateScanButtonState();
+                statusBar.innerHTML = "⏸️ Camera is not running.";
+            }
+        }
+
+        function updateScanButtonState() {
+            const btn = document.getElementById('btn-toggle-scan');
+            if (btn) {
+                if (isScanningActive) {
+                    btn.innerHTML = "⏸️ Stop Scan";
+                    btn.className = "btn btn-red";
+                } else {
+                    btn.innerHTML = "📷 Scan";
+                    btn.className = "btn btn-green";
+                }
+            }
+        }
+
+        function handleSuccessfulScan(decodedText) {
+            const statusBar = document.getElementById('status-bar');
+            document.getElementById('asset_id').value = decodedText.trim();
+            statusBar.innerHTML = `✅ Asset Found: <b>${decodedText.trim()}</b>.<br>Select an inspector grade below to run AI prediction.`;
+            statusBar.style.backgroundColor = "#ccfbf1";
+            statusBar.style.color = "#0f766e";
+
+            if (html5QrCode && html5QrCode.isScanning) {
+                html5QrCode.stop().catch(() => {});
+                isScanningActive = false;
+                updateScanButtonState();
+            }
+        }
+
+        function runAIPrediction(gradeInput) {
+            const asset_id = document.getElementById('asset_id').value.trim();
+            const statusBar = document.getElementById('status-bar');
+            const zoneText = document.getElementById('zone-display') ? document.getElementById('zone-display').innerText : "Southern Railway";
+            
+            if(!asset_id) {
+                alert("Please scan or upload a valid track fitting QR code first!");
+                return;
+            }
+
+            let rustGrade = 1;
+            if (typeof gradeInput === 'string') {
+                const match = gradeInput.match(/\d+/);
+                if (match) rustGrade = parseInt(match[0]);
+            }
+
+            statusBar.innerHTML = "⏳ Running Random Forest AI Prediction with local climate & traffic context...";
+            statusBar.style.backgroundColor = "#fef3c7";
+            statusBar.style.color = "#92400e";
+
+            fetch('/api/predict', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ 
+                    asset_id: asset_id,
+                    rust_grade: rustGrade,
+                    zone: zoneText,
+                    location: document.getElementById('gps-coords') ? document.getElementById('gps-coords').innerText.replace('Coords: ', '') : 'Unknown'
+                }) 
+            })
+            .then(response => response.json())
+            .then(data => {
+                if(data.error) {
+                    statusBar.innerHTML = "⚠️ ML Error: " + data.error;
+                    statusBar.style.backgroundColor = "#fee2e2";
+                    statusBar.style.color = "#991b1b";
+                } else {
+                    const isGood = (data.status === 'Good' || data.status === 'Healthy');
+                    const displayStatus = data.status === 'Healthy' ? 'Good' : data.status;
+
+                    statusBar.style.backgroundColor = isGood ? "#d1fae5" : "#fee2e2";
+                    statusBar.style.color = isGood ? "#065f46" : "#991b1b";
+                    
+                    statusBar.innerHTML = `🎯 <b>AI Analysis Complete!</b><br>
+                    Asset: <b>${data.asset_id}</b><br>
+                    Zone: <b>${zoneText}</b><br>
+                    Captured Traffic Load & Weather: <b>${data.weather}</b> | <b>${data.traffic_load}</b><br>
+                    Predicted Lifespan: <b style="font-size: 16px;">${data.predicted_rul} Years Remaining</b><br>
+                    System Status: <b>${displayStatus}</b><br><br>
+                    <i>Redirecting to Dashboard...</i>`;
+
+                    setTimeout(() => {
+                        window.location.href = "/dashboard";
+                    }, 1500);
+                }
+            })
+            .catch(err => {
+                statusBar.innerHTML = "❌ Server Connection Error.";
+                statusBar.style.backgroundColor = "#fee2e2";
+                statusBar.style.color = "#991b1b";
+            });
+        }
+
+        function changeLocation() {
+            window.location.href = "/map";
+        }
+        
+        function showLogoutModal() { 
+            document.getElementById('logoutModal').style.display = 'flex'; 
+        }
+        
+        function hideLogoutModal() { 
+            document.getElementById('logoutModal').style.display = 'none'; 
+        }
+        
+        function confirmLogout() { 
+            window.location.href = "/logout"; 
+        }
+    </script>
+</body>
+</html>
