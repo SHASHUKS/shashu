@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Login - Railways AayusPredict</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        html, body {
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            height: 100dvh;
+            width: 100%;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow: hidden;
+        }
+
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            /* Background image settings optimized for mobile */
+            background-image: url("{{ url_for('static', filename='loginbackground.jpeg') }}");
+            background-size: cover;
+            background-position: center center;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+        }
+
+        /* --- FROSTED GLASS LOGIN CONTAINER --- */
+        .login-container {
+            background: rgba(255, 255, 255, 0.85); 
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+            padding: 32px 28px;
+            border-radius: 20px;
+            box-shadow: 0 12px 32px rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            width: 90%;
+            max-width: 380px;
+            margin: auto;
+            transition: all 0.3s ease;
+        }
+
+        .login-container h1 {
+            text-align: center;
+            color: #1aa19c;
+            margin-top: 0;
+            margin-bottom: 4px;
+            font-size: 26px;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+        }
+        
+        .login-container p {
+            text-align: center;
+            color: #4b5563;
+            margin-top: 0;
+            margin-bottom: 24px;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 14px 16px;
+            border: 1.5px solid rgba(209, 213, 219, 0.8);
+            border-radius: 10px;
+            font-size: 15px;
+            color: #1f2937;
+            background-color: rgba(255, 255, 255, 0.9);
+            transition: all 0.2s ease;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #1aa19c;
+            background-color: #ffffff;
+            box-shadow: 0 0 0 3px rgba(26, 161, 156, 0.25);
+        }
+
+        .form-group input::placeholder {
+            color: #9ca3af;
+        }
+
+        .login-btn {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #1aa19c 0%, #148581 100%); 
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            margin-top: 6px;
+            box-shadow: 0 4px 12px rgba(26, 161, 156, 0.3);
+        }
+
+        .login-btn:hover {
+            opacity: 0.95;
+            transform: translateY(-1px);
+        }
+
+        .login-btn:active {
+            transform: scale(0.98);
+        }
+
+        .error-message {
+            color: #dc2626;
+            background-color: rgba(254, 226, 226, 0.9);
+            border: 1px solid #fca5a5;
+            padding: 10px;
+            border-radius: 8px;
+            text-align: center;
+            margin-bottom: 18px;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        /* --- MOBILE SPECIFIC SCALING --- */
+        @media (max-width: 480px) {
+            .login-container {
+                padding: 26px 20px;
+                width: 86%;
+            }
+
+            .login-container h1 {
+                font-size: 23px;
+            }
+
+            .login-container p {
+                font-size: 12px;
+                margin-bottom: 20px;
+            }
+
+            .form-group input {
+                padding: 12px 14px;
+                font-size: 14px;
+            }
+
+            .login-btn {
+                padding: 12px;
+                font-size: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="login-container">
+        <h1>Railways AayusPredict</h1>
+        <p>Asset Lifecycle Prediction System</p>
+        
+        {% if error %}
+            <div class="error-message">{{ error }}</div>
+        {% endif %}
+        
+        <form method="POST" action="/login">
+            <div class="form-group">
+                <input type="text" name="username" placeholder="Login ID" required autocomplete="off">
+            </div>
+            <div class="form-group">
+                <input type="password" name="password" placeholder="Password" required>
+            </div>
+            <button type="submit" class="login-btn">Secure Login</button>
+        </form>
+    </div>
+
+</body>
+</html>
