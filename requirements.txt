@@ -1,0 +1,8 @@
+Flask==3.0.3
+pymongo==4.7.2
+dnspython==2.6.1
+qrcode==7.4.2
+pillow==10.3.0
+pytz==2024.1
+requests==2.31.0
+Werkzeug==3.0.3
