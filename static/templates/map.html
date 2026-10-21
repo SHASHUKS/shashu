@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Live Map - Indian Railways</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    
+    <style>
+        * { box-sizing: border-box; }
+        body { margin: 0; padding: 15px; font-family: 'Inter', sans-serif; background-color: #f1f5f9; color: #1e293b; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+        
+        .navbar { background: #ffffff; border-radius: 12px; padding: 18px 30px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.02); margin-bottom: 15px; flex-shrink: 0; width: 100%; z-index: 1000; }
+        .navbar h1 { margin: 0; font-size: 24px; font-weight: 800; color: #1e3a8a; }
+        .nav-buttons { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+        .btn { padding: 12px 18px; border-radius: 8px; font-size: 14px; font-weight: 700; cursor: pointer; border: none; text-decoration: none; color: white; display: inline-block; transition: all 0.2s; text-align: center;}
+        .btn:hover { opacity: 0.9; }
+        .btn-green { background-color: #006600; } .btn-blue { background-color: #2563eb; } .btn-purple { background-color: #8b5cf6; } 
+        .btn-orange { background-color: #f97316; } .btn-teal { background-color: #0d9488; } .btn-red { background-color: #990000; }
+        
+        #map { flex-grow: 1; width: 100%; border-radius: 12px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05); z-index: 1; border: 2px solid #e2e8f0; background: #111; }
+        
+        .popup-content { font-family: 'Inter', sans-serif; padding: 5px; }
+        .popup-title { font-weight: 800; color: #1e3a8a; font-size: 16px; margin-bottom: 8px; border-bottom: 2px solid #e2e8f0; padding-bottom: 5px;}
+        .popup-status { font-weight: 800; margin-bottom: 5px; font-size: 14px;}
+        .status-good { color: #006600; } .status-critical { color: #990000; }
+        .popup-details { font-size: 13px; color: #475569; line-height: 1.6;}
+        .picking-location { cursor: crosshair !important; }
+
+        .map-legend {
+            position: absolute;
+            bottom: 30px;
+            left: 30px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(8px);
+            padding: 15px 20px;
+            border-radius: 12px;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+            z-index: 1000;
+            border: 1px solid #cbd5e1;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .legend-title { font-weight: 800; color: #1e3a8a; font-size: 14px; margin-bottom: 2px; border-bottom: 2px solid #e2e8f0; padding-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .legend-subtitle { font-size: 11px; color: #64748b; margin-top: -10px; margin-bottom: 5px; font-weight: 500;}
+        
+        .legend-item { display: flex; align-items: center; gap: 10px; font-size: 14px; font-weight: 700; color: #334155; cursor: pointer; transition: all 0.2s ease; user-select: none; padding: 4px; border-radius: 6px;}
+        .legend-item:hover { background-color: #f1f5f9; }
+        .legend-item.disabled { opacity: 0.35; filter: grayscale(100%); }
+        
+        .legend-dot { width: 14px; height: 14px; border-radius: 50%; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+        .dot-blue { background-color: #1d4ed8; border: 3px solid #ffffff; margin-left: 4px; margin-right: 4px; }
+        
+        .custom-pin { background: none; border: none; }
+
+        @media (max-width: 900px) {
+            body { padding: 10px; }
+            .navbar {
+                flex-direction: column !important;
+                text-align: center;
+                gap: 12px !important;
+                padding: 15px !important;
+            }
+            .navbar h1 { font-size: 20px; }
+            .nav-buttons {
+                justify-content: center;
+                width: 100%;
+                gap: 8px;
+            }
+            .btn {
+                flex: 1 1 calc(33% - 8px); 
+                padding: 10px 5px;
+                font-size: 12px;
+            }
+            
+            .map-legend {
+                bottom: 20px;
+                left: 15px;
+                padding: 12px;
+                max-width: calc(100vw - 50px);
+                gap: 8px;
+            }
+            .legend-title { font-size: 13px; }
+            .legend-item { font-size: 12px; }
+        }
+
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.6); display: none; justify-content: center; align-items: center; z-index: 9999; }
+        .modal-content { background: #ffffff; padding: 40px; border-radius: 16px; text-align: center; width: 90%; max-width: 450px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
+        .modal-content h2 { color: #1e293b; margin-top: 0; margin-bottom: 15px; font-size: 22px; }
+        .modal-content p { color: #64748b; margin-bottom: 25px; font-size: 16px; }
+        .modal-buttons { display: flex; justify-content: center; gap: 15px; }
+        .btn-modal { padding: 12px 30px; border-radius: 8px; font-size: 16px; font-weight: 700; cursor: pointer; border: none; color: white; text-decoration: none; display: inline-block; }
+        .btn-modal-red { background-color: #990000; }
+        .btn-modal-slate { background-color: #64748b; }
+    </style>
+</head>
+<body>
+    <div class="navbar">
+        <h1>📍 Geospatial Asset Tracking</h1>
+        <div class="nav-buttons">
+            <a href="/scanner" class="btn btn-green">📷 Scan</a>
+            <button onclick="locateMe()" class="btn btn-orange">📍 Live GPS</button>
+            <button id="changeLocationBtn" onclick="toggleLocationSelect()" class="btn btn-teal">✏️ Change Location</button>
+            <a href="/dashboard" class="btn btn-blue">📊 Dashboard</a>
+            <a href="/option" class="btn btn-purple">🏠 Menu</a>
+            <button onclick="showLogoutModal()" class="btn btn-red">Logout 🚪</button>
+        </div>
+    </div>
+    
+    <div id="map"></div>
+
+    <div class="map-legend">
+        <div class="legend-title">Filter By Status</div>
+        <div class="legend-subtitle">Click to isolate, click again to show all</div>
+        
+        <div class="legend-item" id="legend-good" onclick="setFilter('good')">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" style="filter: drop-shadow(0px 3px 3px rgba(0,0,0,0.5));"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" fill="#006600" stroke="#ffffff" stroke-width="2"/></svg>
+            Good Assets Only
+        </div>
+        
+        <div class="legend-item" id="legend-critical" onclick="setFilter('critical')">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" style="filter: drop-shadow(0px 3px 3px rgba(0,0,0,0.5));"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" fill="#990000" stroke="#ffffff" stroke-width="2"/></svg>
+            Critical Assets Only
+        </div>
+        
+        <div class="legend-item" style="cursor: default; pointer-events: none; padding-top: 8px; border-top: 1px solid #e2e8f0; margin-top: 4px;">
+            <span class="legend-dot dot-blue"></span>
+            Your GPS Location
+        </div>
+    </div>
+
+    <div id="logoutModal" class="modal-overlay">
+        <div class="modal-content">
+            <h2>Confirm Logout</h2>
+            <p>Are you sure you want to end your secure session?</p>
+            <div class="modal-buttons">
+                <a href="/logout" class="btn-modal btn-modal-red">Logout</a>
+                <button class="btn-modal btn-modal-slate" onclick="hideLogoutModal()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const railwayZones = [
+            { name: "Central Railway", hq: "Mumbai (CSMT)", lat: 18.9401, lng: 72.8353 },
+            { name: "Eastern Railway", hq: "Kolkata", lat: 22.5726, lng: 88.3639 },
+            { name: "East Central Railway", hq: "Hajipur", lat: 25.6804, lng: 85.2203 },
+            { name: "East Coast Railway", hq: "Bhubaneswar", lat: 20.2961, lng: 85.8245 },
+            { name: "Northern Railway", hq: "New Delhi", lat: 28.6139, lng: 77.2090 },
+            { name: "North Central Railway", hq: "Prayagraj", lat: 25.4358, lng: 81.8463 },
+            { name: "North Eastern Railway", hq: "Gorakhpur", lat: 26.7606, lng: 83.3732 },
+            { name: "Northeast Frontier Railway", hq: "Guwahati", lat: 26.1445, lng: 91.7362 },
+            { name: "North Western Railway", hq: "Jaipur", lat: 26.9124, lng: 75.7873 },
+            { name: "Southern Railway", hq: "Chennai Central", lat: 13.0827, lng: 80.2707 },
+            { name: "South Central Railway", hq: "Secunderabad", lat: 17.4399, lng: 78.4983 },
+            { name: "South Eastern Railway", hq: "Kolkata", lat: 22.5458, lng: 88.3036 },
+            { name: "South East Central Railway", hq: "Bilaspur", lat: 22.0797, lng: 82.1409 },
+            { name: "South Western Railway", hq: "Hubballi", lat: 15.3647, lng: 75.1240 },
+            { name: "Western Railway", hq: "Mumbai", lat: 18.9322, lng: 72.8264 },
+            { name: "West Central Railway", hq: "Jabalpur", lat: 23.1815, lng: 79.9864 },
+            { name: "South Coast Railway", hq: "Visakhapatnam", lat: 17.6868, lng: 83.2185 },
+            { name: "Konkan Railway", hq: "Navi Mumbai", lat: 19.0330, lng: 73.0297 }
+        ];
+
+        var map = L.map('map').setView([20.5937, 78.9629], 5); 
+        
+        // Google Hybrid Tile Layer
+        L.tileLayer('https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', {
+            attribution: '&copy; Google Maps',
+            maxZoom: 20
+        }).addTo(map);
+
+        var goodLayerGroup = L.layerGroup().addTo(map);
+        var criticalLayerGroup = L.layerGroup().addTo(map);
+        var currentFilter = 'all';
+
+        var rawData = {{ items | tojson | safe }};
+        var bounds = [];
+
+        // Pin icon with center hole ring
+        function createPinIcon(color) {
+            var svgIcon = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="46" height="46"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" fill="${color}" stroke="#000000" stroke-width="2"/></svg>`;
+            return L.divIcon({
+                className: 'custom-pin',
+                html: `<div style="filter: drop-shadow(0px 6px 10px rgba(0,0,0,0.9)); transform: scale(1.15);">${svgIcon}</div>`,
+                iconSize: [46, 46],
+                iconAnchor: [23, 46],
+                popupAnchor: [0, -42]
+            });
+        }
+
+        // High-contrast dark blue Live GPS user dot
+        function createCustomDot(color, borderColor) {
+            return L.divIcon({
+                className: 'custom-pin',
+                html: `<div style="background-color:${color}; width:28px; height:28px; border-radius:50%; border:4px solid ${borderColor}; box-shadow: 0 4px 12px rgba(0,0,0,0.9);"></div>`,
+                iconSize: [34, 34],
+                iconAnchor: [17, 17],
+                popupAnchor: [0, -17]
+            });
+        }
+
+        var goodIcon = createPinIcon('#006600');   // Dark Green with hole
+        var criticalIcon = createPinIcon('#990000'); // Dark Red with hole
+        var userIcon = createCustomDot('#1d4ed8', '#ffffff'); // Deep dark blue GPS marker
+
+        rawData.forEach(function(asset, index) {
+            let lat = 20.5937;
+            let lng = 78.9629;
+            let hasValidCoords = false;
+            let displayCoords = asset.gps_location;
+
+            if (asset.gps_location && asset.gps_location !== 'Unknown' && asset.gps_location !== 'Pending Scan') {
+                var coords = asset.gps_location.split(',');
+                if (coords.length === 2) {
+                    let parsedLat = parseFloat(coords[0].trim());
+                    let parsedLng = parseFloat(coords[1].trim());
+                    if (!isNaN(parsedLat) && !isNaN(parsedLng)) {
+                        lat = parsedLat;
+                        lng = parsedLng;
+                        hasValidCoords = true;
+                    }
+                }
+            }
+
+            if (asset.track_load && asset.track_load !== 'Pending Scan') {
+                if (hasValidCoords) {
+                    lat += (Math.random() - 0.5) * 0.0005;
+                    lng += (Math.random() - 0.5) * 0.0005;
+                } else {
+                    lat += (index * 0.05); 
+                    lng += (index * 0.05);
+                }
+
+                var isCritical = (asset.status && asset.status.trim() === 'Critical');
+                var iconToUse = isCritical ? criticalIcon : goodIcon;
+                var displayStatus = isCritical ? 'Critical' : 'Good';
+                var statusClass = isCritical ? 'status-critical' : 'status-good';
+                var alloyName = asset.asset_id.split('-')[2] || 'Unknown';
+                
+                var popupHTML = `<div class="popup-content">
+                    <div class="popup-title">${asset.asset_id}</div>
+                    <div class="popup-status ${statusClass}">Status: ${displayStatus}</div>
+                    <div class="popup-details">
+                        <b>Zone:</b> ${asset.scan_zone.split(' (')[0]}<br>
+                        <b>RUL:</b> ${asset.predicted_rul} Years<br>
+                        <b>Alloy:</b> ${alloyName}<br>
+                        <b>Location:</b> ${displayCoords}
+                    </div>
+                </div>`;
+                
+                var marker = L.marker([lat, lng], {icon: iconToUse}).bindPopup(popupHTML);
+                if (isCritical) { marker.addTo(criticalLayerGroup); } else { marker.addTo(goodLayerGroup); }
+                bounds.push([lat, lng]);
+            }
+        });
+
+        function setFilter(type) {
+            var goodBtn = document.getElementById('legend-good');
+            var criticalBtn = document.getElementById('legend-critical');
+
+            if (currentFilter === type) {
+                currentFilter = 'all';
+                map.addLayer(goodLayerGroup);
+                map.addLayer(criticalLayerGroup);
+                goodBtn.classList.remove('disabled');
+                criticalBtn.classList.remove('disabled');
+            } else {
+                currentFilter = type;
+                if (type === 'good') {
+                    map.addLayer(goodLayerGroup);
+                    map.removeLayer(criticalLayerGroup);
+                    goodBtn.classList.remove('disabled');
+                    criticalBtn.classList.add('disabled');
+                } else if (type === 'critical') {
+                    map.addLayer(criticalLayerGroup);
+                    map.removeLayer(goodLayerGroup);
+                    criticalBtn.classList.remove('disabled');
+                    goodBtn.classList.add('disabled');
+                }
+            }
+        }
+
+        function findNearestRailwayZone(lat, lng) {
+            let nearest = railwayZones[0];
+            let minDistance = Infinity;
+            railwayZones.forEach(zone => {
+                let dist = Math.hypot(zone.lat - lat, zone.lng - lng);
+                if (dist < minDistance) {
+                    minDistance = dist;
+                    nearest = zone;
+                }
+            });
+            return `${nearest.name} (HQ: ${nearest.hq})`;
+        }
+
+        var userMarker = null;
+        var isSelectingLocation = false;
+
+        function syncLocationToServer(zoneName, lat, lng) {
+            fetch('/set_location', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    zone: zoneName,
+                    gps: lat.toFixed(6) + ", " + lng.toFixed(6)
+                })
+            }).catch(err => console.error("Sync error:", err));
+        }
+
+        function placeUserMarker(lat, lng, label) {
+            let zoneName = findNearestRailwayZone(lat, lng);
+            if(userMarker) { map.removeLayer(userMarker); }
+            userMarker = L.marker([lat, lng], {icon: userIcon, zIndexOffset: 1000}).addTo(map);
+            userMarker.bindPopup(`<div class="popup-content"><div class="popup-title" style="color: #1d4ed8;">📍 ${zoneName}</div><div class="popup-details"><b>Pinned Label:</b> ${label}<br><b>Latitude:</b> ${lat.toFixed(6)}<br><b>Longitude:</b> ${lng.toFixed(6)}</div></div>`).openPopup();
+            map.setView([lat, lng], 14);
+
+            localStorage.setItem("custom_gps", lat.toFixed(6) + ", " + lng.toFixed(6));
+            localStorage.setItem("custom_zone", zoneName);
+
+            syncLocationToServer(zoneName, lat, lng);
+        }
+
+        function locateMe() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(function(position) {
+                    placeUserMarker(position.coords.latitude, position.coords.longitude, "Live GPS Position");
+                }, function(error) { alert("Please allow location access."); });
+            } else { alert("Geolocation is not supported."); }
+        }
+
+        function toggleLocationSelect() {
+            var btn = document.getElementById("changeLocationBtn");
+            if (!isSelectingLocation) {
+                isSelectingLocation = true;
+                btn.innerHTML = "🎯 Click map to pin";
+                btn.style.backgroundColor = "#990000"; 
+                document.getElementById('map').classList.add('picking-location');
+            } else {
+                isSelectingLocation = false;
+                btn.innerHTML = "✏️ Change Location";
+                btn.style.backgroundColor = "#0d9488"; 
+                document.getElementById('map').classList.remove('picking-location');
+            }
+        }
+
+        function showLogoutModal() { document.getElementById('logoutModal').style.display = 'flex'; }
+        function hideLogoutModal() { document.getElementById('logoutModal').style.display = 'none'; }
+
+        map.on('click', function(e) {
+            if (isSelectingLocation) {
+                var lat = e.latlng.lat;
+                var lng = e.latlng.lng;
+                
+                placeUserMarker(lat, lng, "Custom Pinned Location");
+                
+                isSelectingLocation = false;
+                var btn = document.getElementById("changeLocationBtn");
+                btn.innerHTML = "✏️ Change Location";
+                btn.style.backgroundColor = "#0d9488"; 
+                document.getElementById('map').classList.remove('picking-location');
+            }
+        });
+
+        if (bounds.length > 0) { map.fitBounds(bounds, {padding: [50, 50]}); }
+        
+        document.addEventListener("DOMContentLoaded", function() {
+            var savedLocation = localStorage.getItem("custom_gps");
+            var savedZone = localStorage.getItem("custom_zone");
+            if(savedLocation) {
+                var parts = savedLocation.split(',');
+                placeUserMarker(parseFloat(parts[0]), parseFloat(parts[1]), savedZone || "Custom Pinned Location");
+            }
+        });
+    </script>
+</body>
+</html>
