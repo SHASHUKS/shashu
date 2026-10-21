@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QR Generator - Railways AayusPredict</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body class="generator-body">
+
+    <div class="top-nav">
+        <a href="/option" class="back-btn">← Back to Menu</a>
+    </div>
+
+    <div class="generator-container">
+        <div class="top-bar"></div>
+        <h1>Structured QR Generator</h1>
+        <p class="subtitle">Standardized Indian Railways Asset ID Studio</p>
+
+        <form method="POST">
+            
+            <div class="small-row">
+                <div class="form-group">
+                    <label>Network Prefix</label>
+                    <input type="text" name="network_prefix" value="IR" readonly style="background: rgba(15,23,42,0.5); cursor: not-allowed; font-weight: bold; color: #2dd4bf;">
+                </div>
+                <div class="form-group">
+                    <label>Component Type</label>
+                    <select name="component_type" id="component_type" required>
+                        <!-- Fastenings & Structural Fittings -->
+                        <option value="ERC">ERC (Elastic Rail Clip)</option>
+                        <option value="BP">Baseplate</option>
+                        <option value="RC">Rail Clamp</option>
+                        <option value="FP">Fishplate</option>
+                        <option value="RS">Rail Section</option>
+                        <option value="SW">Spring Washer</option>
+                        <option value="TP">Tie Plate / Bearing Plate</option>
+                        <option value="RA">Rail Anchor</option>
+                        <option value="DS">Dog Spike</option>
+                        <option value="TB">Switch Blade (Tongue Rail)</option>
+                        <option value="XG">Crossing (Frog)</option>
+                        <option value="GIJ">Glued Insulated Rail Joint</option>
+                        
+                        <!-- Additional Metal Track Fittings -->
+                        <option value="CRI">Cast Iron Insert (Sleeper Insert)</option>
+                        <option value="HSFG">HSFG Bolt (High-Strength Friction Grip)</option>
+                        <option value="SS">Screw Spike / Rail Screw</option>
+                        <option value="SJB">Stretcher Bar (Point Switch Link)</option>
+                        <option value="CR">Check Rail / Guard Rail</option>
+                        <option value="JFP">Joggled Fishplate (Emergency Joint)</option>
+                        <option value="SEJ">Switch Expansion Joint (SEJ)</option>
+                        <option value="TFB">Track Fastening Bolt / Fish Bolt</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="small-row">
+                <div class="form-group">
+                    <label>Alloy / Material Grade</label>
+                    <select name="alloy_grade" id="alloy_grade" required>
+                        <!-- Options populated dynamically via JavaScript -->
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Manufacture Month & Year</label>
+                    <input type="month" id="mfg_month" name="mfg_month" value="2026-09" min="1900-01" max="2099-12" required>
+                </div>
+            </div>
+
+            <div class="small-row">
+                <div class="form-group">
+                    <label>Exact Installation Date</label>
+                    <input type="date" id="exact_date" name="exact_date" value="2026-09-15" min="1900-01-01" max="2099-12-31" required>
+                </div>
+                <div class="form-group">
+                    <label>Design Life / Warranty</label>
+                    <select name="warranty_years" required>
+                        <option value="5">5 Years</option>
+                        <option value="10">10 Years</option>
+                        <option value="15">15 Years</option>
+                        <option value="20" selected>20 Years</option>
+                        <option value="25">25 Years</option>
+                        <option value="30">30 Years</option>
+                        <option value="40">40 Years</option>
+                        <option value="50">50 Years</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Custom Serial ID (6-Digit)</label>
+                <input type="text" name="serial_id" required placeholder="e.g., 482910" maxlength="6">
+            </div>
+
+            <button type="submit" class="submit-btn">Generate Standardized Laser QR Code</button>
+        </form>
+
+        {% if qr_path %}
+        <div class="result-container" id="printable-qr">
+            <h3>[SUCCESS] QR Code Generated!</h3>
+            <p style="font-size: 13px; color: #94a3b8; margin-bottom: 12px;">
+                Asset ID: <b style="color: #2dd4bf;">{{ item_id }}</b>
+            </p>
+            
+            <div style="display: flex; justify-content: center; margin-bottom: 15px;">
+                <img id="generatedQrImg" src="{{ qr_path }}" alt="Generated QR Code" style="width: 200px; height: 200px; border-radius: 12px; border: 2px solid rgba(255, 255, 255, 0.2); background: #ffffff; padding: 8px;">
+            </div>
+            
+            <div class="action-buttons" style="display: flex; gap: 8px; justify-content: center; flex-wrap: wrap;">
+                <button type="button" onclick="downloadQRCode('{{ qr_path }}', '{{ item_id }}_QRCode.png')" class="small-btn">⬇ Download PNG</button>
+                <button type="button" onclick="downloadQRAsJpg('{{ item_id }}_QRCode.jpg')" class="small-btn" style="background: #0284c7; color: #ffffff;" onmouseover="this.style.background='#0369a1'" onmouseout="this.style.background='#0284c7'">🖼 Download JPG</button>
+                <button type="button" onclick="window.print()" class="small-btn">🖨 Print for Laser Etch</button>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <script>
+        // DOWNLOAD QR AS JPG FUNCTION
+        function downloadQRAsJpg(filename) {
+            const imgElement = document.getElementById('generatedQrImg');
+            if (!imgElement) {
+                alert("No QR Code image found to convert.");
+                return;
+            }
+
+            // Create Canvas to draw JPG with solid white background
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+
+            canvas.width = imgElement.naturalWidth || 300;
+            canvas.height = imgElement.naturalHeight || 300;
+
+            // Fill white background
+            ctx.fillStyle = '#FFFFFF';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Draw QR code image onto canvas
+            ctx.drawImage(imgElement, 0, 0, canvas.width, canvas.height);
+
+            // Export as JPG Base64 Data URL
+            const jpgDataUrl = canvas.toDataURL('image/jpeg', 0.95);
+
+            // Trigger hybrid download logic
+            downloadQRCode(jpgDataUrl, filename);
+        }
+
+        // HYBRID WEBVIEW & BROWSER DOWNLOAD HANDLER
+        function downloadQRCode(base64Data, filename) {
+            if (!base64Data) {
+                alert("No QR Code data found to download.");
+                return;
+            }
+
+            // Check if running inside an Android WebView container
+            const isWebView = /wv|Android.*Version\/[0-9]/i.test(navigator.userAgent);
+
+            if (isWebView) {
+                // APK WEBVIEW FALLBACK: Open in a clean viewer window for direct long-press saving
+                const imageWindow = window.open("", "_blank");
+                if (imageWindow) {
+                    imageWindow.document.write(`
+                        <!DOCTYPE html>
+                        <html>
+                        <head>
+                            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                            <title>Save QR Code</title>
+                            <style>
+                                body { background: #0f172a; color: white; text-align: center; font-family: sans-serif; padding: 20px; }
+                                img { width: 80%; max-width: 300px; border-radius: 12px; margin: 20px 0; background: white; padding: 10px; border: 2px solid #2dd4bf; }
+                                p { color: #2dd4bf; font-weight: bold; font-size: 14px; line-height: 1.5; }
+                            </style>
+                        </head>
+                        <body>
+                            <h3>Indian Railways Asset QR Code</h3>
+                            <img src="${base64Data}" alt="QR Code" />
+                            <p>👇 Tap & Hold (Long-Press) the QR code image above and select "Save Image" or "Download Image"</p>
+                        </body>
+                        </html>
+                    `);
+                } else {
+                    window.location.href = base64Data;
+                }
+            } else {
+                // STANDARD BROWSER: Direct Blob Download
+                try {
+                    const parts = base64Data.split(';base64,');
+                    const contentType = parts[0].split(':')[1];
+                    const raw = window.atob(parts[1]);
+                    const rawLength = raw.length;
+                    const uInt8Array = new Uint8Array(rawLength);
+
+                    for (let i = 0; i < rawLength; ++i) {
+                        uInt8Array[i] = raw.charCodeAt(i);
+                    }
+
+                    const blob = new Blob([uInt8Array], { type: contentType });
+                    const blobUrl = URL.createObjectURL(blob);
+
+                    const link = document.createElement('a');
+                    link.href = blobUrl;
+                    link.download = filename;
+                    document.body.appendChild(link);
+                    link.click();
+
+                    setTimeout(() => {
+                        document.body.removeChild(link);
+                        URL.revokeObjectURL(blobUrl);
+                    }, 1000);
+                } catch (err) {
+                    console.error("Download Error:", err);
+                    window.location.href = base64Data;
+                }
+            }
+        }
+
+        document.addEventListener("DOMContentLoaded", function() {
+            const mfgInput = document.getElementById("mfg_month");
+            const exactDateInput = document.getElementById("exact_date");
+            const componentSelect = document.getElementById("component_type");
+            const alloySelect = document.getElementById("alloy_grade");
+
+            // Master database of all RDSO / IRS alloy grades
+            const allAlloys = {
+                "SGCI500": "SGCI Grade 500/7 (Ductile Iron)",
+                "SGCI400": "SGCI Grade 400/12 (Ductile Iron)",
+                "EN45": "EN 45 / 55Si7 (Silico-Manganese Spring Steel)",
+                "EN47": "EN 47 (Chromium-Vanadium Spring Steel)",
+                "60Si7": "60Si7 / 60Si2Mn (High-Fatigue Spring Steel)",
+                "SUP9": "SUP 9 (Alloy Spring Steel)",
+                "R880": "Grade 880 (90 UTS Carbon-Manganese Rail)",
+                "R1080": "Grade 1080 HH (Head-Hardened Rail)",
+                "IRST1": "IRS T-1/57 (High-Carbon Joint Steel)",
+                "GIJ6T": "GIJ Class G(S) 6-Bolt (Insulated Joint Steel)",
+                "CMS": "CMS (Austenitic Manganese Steel - IRS T-29)",
+                "EN19": "EN 19 / Class 4 (Forged High-Tensile Steel)",
+                "HSFG88": "Class 8.8 / 10.9 HSFG (High-Tensile Steel)",
+                "IS2062": "IS 2062 (Structural Mild Steel)"
+            };
+
+            // Strict Component-to-Alloy Mapping
+            const componentAlloysMap = {
+                "ERC": ["EN45", "EN47", "60Si7", "SUP9"],
+                "BP": ["SGCI500", "SGCI400"],
+                "RC": ["EN19"],
+                "FP": ["IRST1"],
+                "RS": ["R880", "R1080"],
+                "SW": ["SUP9", "EN45"],
+                "TP": ["SGCI500", "IS2062"],
+                "RA": ["EN47", "60Si7"],
+                "DS": ["IS2062"],
+                "TB": ["R1080", "R880"],
+                "XG": ["CMS"],
+                "GIJ": ["GIJ6T", "IRST1"],
+                "CRI": ["SGCI500", "SGCI400"],
+                "HSFG": ["HSFG88"],
+                "SS": ["IS2062"],
+                "SJB": ["IS2062", "EN19"],
+                "CR": ["R880"],
+                "JFP": ["IS2062", "IRST1"],
+                "SEJ": ["R880", "R1080"],
+                "TFB": ["IS2062", "EN19"]
+            };
+
+            function filterAlloysForComponent() {
+                const selectedComp = componentSelect.value;
+                const validAlloys = componentAlloysMap[selectedComp] || [];
+
+                alloySelect.innerHTML = "";
+
+                validAlloys.forEach(alloyCode => {
+                    if (allAlloys[alloyCode]) {
+                        const opt = document.createElement("option");
+                        opt.value = alloyCode;
+                        opt.textContent = allAlloys[alloyCode];
+                        alloySelect.appendChild(opt);
+                    }
+                });
+            }
+
+            function enforceDateChronology() {
+                const mfgVal = mfgInput.value;
+                if (mfgVal) {
+                    const minDate = mfgVal + "-01"; 
+                    exactDateInput.min = minDate;
+                    
+                    if (exactDateInput.value && exactDateInput.value < minDate) {
+                        exactDateInput.value = "";
+                        alert("Installation date cannot be before the manufacture month.");
+                    }
+                }
+            }
+
+            componentSelect.addEventListener("change", filterAlloysForComponent);
+            mfgInput.addEventListener("change", enforceDateChronology);
+            
+            enforceDateChronology();
+            filterAlloysForComponent();
+        });
+    </script>
+</body>
+</html>
